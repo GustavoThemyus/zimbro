@@ -1,0 +1,74 @@
+name: financeiro
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-financeiro}
+      POSTGRES_USER: ${DB_USER:-financeiro}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-financeiro}
+      # Collation pt-BR para ordenacao de nome de categoria e estabelecimento
+      POSTGRES_INITDB_ARGS: "--locale=C.UTF-8"
+    volumes:
+      # No Postgres 18+ a imagem quer UM mount em /var/lib/postgresql (ele cria
+      # /18/docker dentro). Montar em /data e o jeito antigo e nao sobe mais.
+      - dados-postgres:/var/lib/postgresql
+    # Exposta so em localhost, para o dev rodar o backend fora do compose.
+    # 5433 por padrao: 5432 costuma estar ocupado por outro projeto na mesma maquina.
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-financeiro} -d ${DB_NAME:-financeiro}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-financeiro}
+      DB_USER: ${DB_USER:-financeiro}
+      DB_PASSWORD: ${DB_PASSWORD:-financeiro}
+      TZ: America/Sao_Paulo
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    environment:
+      BACKEND_URL: http://backend:8080
+      TZ: America/Sao_Paulo
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:-http://localhost}
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+      - caddy-config:/config
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+volumes:
+  dados-postgres:
+  caddy-dados:
+  caddy-config:

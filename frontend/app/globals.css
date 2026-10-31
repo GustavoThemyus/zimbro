@@ -1,0 +1,55 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* tokens.css e gerado. Este arquivo e o unico escrito a mao, e so com o que o
+   gerador nao pode saber: de onde vem o arquivo da fonte e as regras de base. */
+
+:root {
+  /* next/font serve Geist e Geist Mono do nosso dominio (sem chamada ao Google
+     em producao). O token continua se chamando --font-sans; muda so a origem. */
+  --font-sans: var(--font-geist-sans), "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  background: var(--surface-canvas);
+  /* O iOS nao deve inventar tamanho de letra na horizontal. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--surface-canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+}
+
+/* Dinheiro e numero de tabela: largura de digito fixa, sempre. Digito de largura
+   variavel desalinha coluna de valores e impede conferir contra o extrato. */
+.tabular,
+input[inputmode="decimal"],
+input[inputmode="numeric"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Foco visivel em tudo que recebe teclado. Anel de 2px com 2px de folga: nunca
+   outline sumindo, nunca contorno colado na borda do controle. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Area de toque: 44px e piso absoluto. */
+:where(button, a[role="button"], [role="switch"]) {
+  min-height: var(--touch-min);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

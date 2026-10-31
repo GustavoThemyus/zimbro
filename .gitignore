@@ -1,0 +1,23 @@
+# Segredo de ambiente. Nunca versionar: .env.example e o modelo.
+.env
+
+# Java
+target/
+*.class
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Editor e sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Logs e dump local
+*.log
+*.sql.gz

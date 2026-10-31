@@ -1,0 +1,22 @@
+# DOMINIO vem do .env. Local: http://localhost (sem TLS).
+# Producao: o dominio de verdade, e o Caddy resolve o certificado sozinho.
+{$DOMINIO:http://localhost} {
+	encode zstd gzip
+
+	# Monitoramento externo (UptimeRobot) — o unico caminho do backend exposto
+	# para fora. Todo o resto do backend so e alcancavel dentro da rede docker.
+	route /saude {
+		rewrite * /actuator/health
+		reverse_proxy backend:8080
+	}
+
+	# Tudo vai para o Next, inclusive /api/*, porque /api/* SAO os route handlers
+	# do Next. O navegador nunca fala com o Spring direto: e o Next que carrega o
+	# cookie httpOnly de sessao e repassa a chamada.
+	reverse_proxy frontend:3000
+
+	log {
+		output stdout
+		format json
+	}
+}

@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+      # Os testes sobem um Postgres de verdade com Testcontainers. O runner do
+      # GitHub ja tem Docker, entao nao precisa de servico declarado aqui.
+      - run: ./mvnw -B verify
+        working-directory: backend
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-fund --no-audit
+        working-directory: frontend
+      # Os tokens sao gerados: se alguem editar app/tokens.css a mao, o diff
+      # aparece aqui e o build quebra.
+      - run: npm run tokens && git diff --exit-code app/tokens.css
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      # `next build` roda o TypeScript junto: nao precisa de passo de tsc separado,
+      # e tsc sozinho falharia porque os tipos de rota sao gerados pelo build.
+      - run: npm run build
+        working-directory: frontend
+
+  deploy:
+    # Roda so na main e so depois de os segredos da VPS existirem.
+    needs: [backend, frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: segredos
+        run: |
+          if [ -n "${{ secrets.VPS_HOST }}" ]; then
+            echo "pronto=sim" >> "$GITHUB_OUTPUT"
+          else
+            echo "pronto=nao" >> "$GITHUB_OUTPUT"
+            echo "VPS_HOST nao configurado — deploy ignorado." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - if: steps.segredos.outputs.pronto == 'sim'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: steps.segredos.outputs.pronto == 'sim'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:${{ github.sha }},ghcr.io/${{ github.repository }}/backend:latest
+
+      - if: steps.segredos.outputs.pronto == 'sim'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }},ghcr.io/${{ github.repository }}/frontend:latest
+
+      - if: steps.segredos.outputs.pronto == 'sim'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            git pull --ff-only
+            docker compose pull
+            docker compose up -d
+            docker image prune -f

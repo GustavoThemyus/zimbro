@@ -1,12 +1,12 @@
-name: financeiro
+name: zimbro
 
 services:
   db:
     image: postgres:18-alpine
     environment:
-      POSTGRES_DB: ${DB_NAME:-financeiro}
-      POSTGRES_USER: ${DB_USER:-financeiro}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-financeiro}
+      POSTGRES_DB: ${DB_NAME:-zimbro}
+      POSTGRES_USER: ${DB_USER:-zimbro}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-zimbro}
       # Collation pt-BR para ordenacao de nome de categoria e estabelecimento
       POSTGRES_INITDB_ARGS: "--locale=C.UTF-8"
     volumes:
@@ -18,7 +18,7 @@ services:
     ports:
       - "127.0.0.1:${DB_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-financeiro} -d ${DB_NAME:-financeiro}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-zimbro} -d ${DB_NAME:-zimbro}"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -28,9 +28,9 @@ services:
     build: ./backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-financeiro}
-      DB_USER: ${DB_USER:-financeiro}
-      DB_PASSWORD: ${DB_PASSWORD:-financeiro}
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-zimbro}
+      DB_USER: ${DB_USER:-zimbro}
+      DB_PASSWORD: ${DB_PASSWORD:-zimbro}
       TZ: America/Sao_Paulo
     depends_on:
       db:

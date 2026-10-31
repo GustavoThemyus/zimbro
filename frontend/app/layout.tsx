@@ -6,9 +6,9 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Financeiro",
+  title: "Zimbro",
   description: "Quanto entrou, quanto saiu, quanto sobrou.",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Financeiro" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Zimbro" },
   icons: { apple: "/icons/apple-touch-icon.png" },
 };
 

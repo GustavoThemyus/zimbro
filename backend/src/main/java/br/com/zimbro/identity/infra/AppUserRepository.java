@@ -1,0 +1,16 @@
+package br.com.zimbro.identity.infra;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import br.com.zimbro.identity.domain.AppUser;
+
+public interface AppUserRepository extends JpaRepository<AppUser, UUID> {
+
+    @Query("select u from AppUser u where lower(u.email) = lower(:email)")
+    Optional<AppUser> porEmail(@Param("email") String email);
+}

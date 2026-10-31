@@ -15,9 +15,18 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Abra <http://localhost>. A tela da semana 0 mostra a hora vinda do Postgres e quantas
-migrações foram aplicadas — é a prova de que navegador → Next → Spring → Postgres está
-ligado ponta a ponta.
+Abra <http://localhost>, crie uma conta e lance. O cadastro já cria duas contas
+(“Conta do banco” e “Dinheiro”) para você poder registrar antes de configurar qualquer
+coisa.
+
+### Telas
+
+| Rota | O que é |
+|---|---|
+| `/cadastro`, `/entrar` | Criar conta e entrar. Cadastrar já entra. |
+| `/` | O mês: quanto sobrou, entrou, saiu, quanto você tirou, e a lista. |
+| `/lancar` | Lançamento rápido. Três toques: valor, categoria, salvar. |
+| `/contas` | Contas do workspace. |
 
 ### Rodar para desenvolver
 
@@ -45,10 +54,22 @@ infra/       Caddyfile — HTTPS automático e proxy reverso
 docker-compose.yml
 ```
 
-O backend é organizado por assunto, não por camada. Hoje existe só `platform/`; os módulos
-`identity/`, `accounts/`, `ledger/`, `catalog/`, `rules/`, `imports/`, `mei/`, `reporting/`,
-`notifications/` e `billing/` nascem na semana em que são construídos — pasta vazia não
-ajuda ninguém.
+O backend é organizado por assunto, não por camada. Existem `platform/`, `identity/`,
+`accounts/`, `catalog/`, `ledger/`, `reporting/` e `notifications/`; `rules/`, `imports/`,
+`mei/` e `billing/` nascem na semana em que são construídos — pasta vazia não ajuda
+ninguém.
+
+Conversa entre módulos passa por um pacote `api` (veja `accounts/api/ContasApi`): ninguém
+importa a entidade nem o repositório de outro módulo, e referência cruzada é por id.
+
+### Sessão
+
+O token de sessão vive num cookie **httpOnly** escrito pelo Next. O JavaScript da página
+nunca o vê, então um XSS não rouba sessão de ninguém. O navegador fala só com o Next, que
+encaminha para o Spring em `app/api/b/[...rota]`. No banco fica apenas o SHA-256 do token.
+
+> **Falta antes do primeiro cliente:** não há SMTP. O link de recuperação de senha vai para
+> o log (`AvisosPorLog`). Sem isso, quem esquecer a senha fica trancado para fora.
 
 ## Duas regras que não se negociam
 

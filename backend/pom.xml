@@ -37,6 +37,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
+		<!-- So o BCrypt. O starter inteiro do Spring Security traria uma cadeia de
+		     filtros que nao usamos: a sessao e resolvida por um interceptor nosso,
+		     visivel e depuravel por quem esta aprendendo. -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>

@@ -1,4 +1,4 @@
-# Financeiro — controle financeiro para MEI
+# Zimbro — controle financeiro para MEI
 
 Responde três perguntas que o MEI hoje não consegue responder: **quanto sobrou pra mim**,
 **o que é meu e o que é do negócio**, e **estou perto de estourar o limite anual**.
@@ -8,11 +8,16 @@ Isso é limite de escopo, não omissão.
 
 ## Rodar
 
+> `npm run dev` **na raiz não funciona** — o `package.json` mora em `frontend/`.
+> Use os atalhos do `make`, que rodam da raiz: `make ajuda` lista todos.
+
+### Tudo no Docker, como em produção
+
 Precisa de Docker e Docker Compose. Nada mais.
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
+make up
 ```
 
 Abra <http://localhost>, crie uma conta e lance. O cadastro já cria duas contas
@@ -28,22 +33,36 @@ coisa.
 | `/lancar` | Lançamento rápido. Três toques: valor, categoria, salvar. |
 | `/contas` | Contas do workspace. |
 
-### Rodar para desenvolver
+### Desenvolvendo, com recarga automática
 
-Com recarga automática nos dois lados, só o banco no Docker:
+Só o banco no Docker; backend e frontend rodam na sua máquina. São **três
+terminais**:
 
 ```bash
-docker compose up -d db                   # banco na porta 5433 do seu computador
-cd backend && ./mvnw spring-boot:run     # porta 8080
-cd frontend && npm install && npm run dev # porta 3000
+make dev
 ```
+
+Isso sobe o banco e te lembra dos outros dois:
+
+```bash
+cd backend && ./mvnw spring-boot:run      # porta 8080
+```
+
+```bash
+cd frontend && npm install && npm run dev # porta 3000  <- é esta que você abre
+```
+
+Abra **<http://localhost:3000>**. O Next conversa com o Spring sozinho; você
+nunca abre a porta 8080 no navegador.
 
 ### Testar
 
 ```bash
-cd backend && ./mvnw verify   # sobe um Postgres de verdade com Testcontainers
-cd frontend && npm run build  # o build roda o TypeScript junto
+make teste
 ```
+
+Os testes do backend sobem um Postgres de verdade com Testcontainers — banco em
+memória mente sobre SQL, e aqui o SQL é o produto.
 
 ## Estrutura
 

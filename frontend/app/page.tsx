@@ -15,35 +15,35 @@ const NOMES_DE_MES = [
   "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
 ];
 
-type Periodo = { ano: number; mes: number };
-
 export default function Inicio() {
   const router = useRouter();
-  // O mês corrente só é lido depois que a página monta. Ler o relógio durante a
-  // renderização congelaria "hoje" no momento do build — a página seria gerada
-  // uma vez e mostraria para sempre o mês em que foi publicada.
-  const [periodo, setPeriodo] = useState<Periodo | null>(null);
+  // Guardamos QUANTOS MESES de distância de hoje estamos, não o mês em si.
+  // O relógio é lido dentro do efeito que busca os dados, nunca na renderização:
+  // ler a data ao renderizar congelaria "hoje" no momento em que a página foi
+  // gerada, e ela mostraria para sempre o mês da publicação. Qual mês é esse
+  // em palavras vem da própria resposta da API.
+  const [deslocamento, setDeslocamento] = useState(0);
   const [filtro, setFiltro] = useState<"" | "BUSINESS" | "PERSONAL">("");
   const [mes, setMes] = useState<Mes | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [editando, setEditando] = useState<Lancamento | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    const d = new Date();
-    setPeriodo({ ano: d.getFullYear(), mes: d.getMonth() + 1 });
-  }, []);
-
   const carregar = useCallback(() => {
-    if (!periodo) return;
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + deslocamento);
 
-    const busca = new URLSearchParams({ ano: String(periodo.ano), mes: String(periodo.mes) });
+    const busca = new URLSearchParams({
+      ano: String(d.getFullYear()),
+      mes: String(d.getMonth() + 1),
+    });
     if (filtro) busca.set("escopo", filtro);
 
     api<Mes>(`mes?${busca}`)
       .then(setMes)
       .catch((e: Error) => setErro(e.message));
-  }, [periodo, filtro]);
+  }, [deslocamento, filtro]);
 
   useEffect(carregar, [carregar]);
 
@@ -52,11 +52,7 @@ export default function Inicio() {
   }, []);
 
   function andarMes(passo: number) {
-    setPeriodo((p) => {
-      if (!p) return p;
-      const d = new Date(p.ano, p.mes - 1 + passo, 1);
-      return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
-    });
+    setDeslocamento((d) => d + passo);
   }
 
   async function sair() {
@@ -66,7 +62,7 @@ export default function Inicio() {
   }
 
   const resumo = mes?.resumo;
-  const nomeDoMes = periodo ? NOMES_DE_MES[periodo.mes - 1] : "";
+  const nomeDoMes = mes ? NOMES_DE_MES[mes.mes - 1] : "";
 
   return (
     <main

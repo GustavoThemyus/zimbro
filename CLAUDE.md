@@ -1024,8 +1024,10 @@ da semana 2** (decisão 2) e **antes da semana 4** (decisão 1).
 
 Duas pendências de infraestrutura que não são decisões de produto, mas bloqueiam cliente
 real: **não há VPS provisionada** (o job de deploy do CI fica desligado esperando o segredo
-`VPS_HOST`) e **não há SMTP** — a recuperação de senha hoje só escreve o link no log do
-servidor, então quem esquecer a senha fica trancado fora.
+`VPS_HOST`) e **o envio de e-mail não está ligado** — o adaptador SMTP existe e é escolhido
+por `EMAIL_MODO=smtp`, mas falta credencial de provedor e, antes dela, o domínio: o remetente
+precisa ser um endereço do próprio domínio com SPF/DKIM, senão é barrado. Enquanto isso o modo
+é `log` e quem esquecer a senha fica trancado fora.
 
 **1. Quais bancos e aplicativos os cinco primeiros prospects usam?**
 Define quais *fixtures* de OFX construir na semana 4 e se o corte "OFX antes de CSV" está

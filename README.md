@@ -87,8 +87,37 @@ O token de sessão vive num cookie **httpOnly** escrito pelo Next. O JavaScript 
 nunca o vê, então um XSS não rouba sessão de ninguém. O navegador fala só com o Next, que
 encaminha para o Spring em `app/api/b/[...rota]`. No banco fica apenas o SHA-256 do token.
 
-> **Falta antes do primeiro cliente:** não há SMTP. O link de recuperação de senha vai para
-> o log (`AvisosPorLog`). Sem isso, quem esquecer a senha fica trancado para fora.
+### E-mail
+
+A recuperação de senha é hoje a única saída de quem esquece a senha, então o envio tem dois
+adaptadores atrás da mesma porta (`notifications/api/Avisos`), escolhidos por configuração:
+
+| `EMAIL_MODO` | Adaptador | O que faz |
+|---|---|---|
+| `log` (padrão) | `AvisosPorLog` | escreve o link no log do servidor e **grita no startup** que nada é enviado |
+| `smtp` | `AvisosPorEmail` | envia de verdade, em texto puro, por SMTP com STARTTLS |
+
+Para ligar o envio real, preencha no `.env`: `EMAIL_MODO=smtp`, `EMAIL_REMETENTE`,
+`SMTP_HOST`, `SMTP_PORT`, `SMTP_USUARIO`, `SMTP_SENHA`. Nenhum código muda.
+
+Três decisões que valem explicar:
+
+**`EMAIL_MODO=smtp` com `SMTP_HOST` vazio derruba o app no startup.** Não volta calado para
+o modo de log. Erro de digitação em variável de ambiente precisa quebrar o deploy, não
+aparecer semanas depois no primeiro cliente que esquece a senha.
+
+**Falha de envio não estoura para quem pediu.** A chamada acontece depois de o token de
+recuperação já estar gravado. Se o SMTP estiver fora do ar, o erro vai para o log e para o
+Sentry, e o usuário pede outro link — em vez de levar 500 na tela e nenhum e-mail.
+
+**`APP_ENDERECO` é obrigatório em produção.** É ele que monta o link do e-mail. O padrão é
+`http://localhost:3000`, que serve para desenvolver e não serve para ninguém mais; no Compose
+ele vem de `DOMINIO`.
+
+> **Falta antes do primeiro cliente:** nenhuma credencial de SMTP está preenchida, e o
+> remetente precisa ser um endereço do domínio do Zimbro com SPF/DKIM configurados —
+> remetente de domínio alheio é barrado ou cai em spam. Ou seja: **isto só fecha depois de o
+> domínio existir.** Até lá o modo é `log`, e nenhum MEI real pode se cadastrar.
 
 ## Duas regras que não se negociam
 

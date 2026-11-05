@@ -31,6 +31,15 @@ services:
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-zimbro}
       DB_USER: ${DB_USER:-zimbro}
       DB_PASSWORD: ${DB_PASSWORD:-zimbro}
+      # Endereco publico, usado no link de recuperacao de senha. Sem isto o link
+      # sai apontando para localhost:3000 e nao funciona para o cliente.
+      APP_ENDERECO: ${DOMINIO:-http://localhost}
+      EMAIL_MODO: ${EMAIL_MODO:-log}
+      EMAIL_REMETENTE: ${EMAIL_REMETENTE:-Zimbro <nao-responda@localhost>}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_SENHA: ${SMTP_SENHA:-}
       TZ: America/Sao_Paulo
     depends_on:
       db:

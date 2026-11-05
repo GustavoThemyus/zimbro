@@ -24,6 +24,12 @@ Abra <http://localhost>, crie uma conta e lance. O cadastro já cria duas contas
 (“Conta do banco” e “Dinheiro”) para você poder registrar antes de configurar qualquer
 coisa.
 
+> **Neste modo a porta 3000 não responde.** Dentro do Compose o Next e o Spring só escutam na
+> rede interna do Docker; quem atende o navegador é o Caddy, na porta 80. Isso é de propósito —
+> é o que mantém o backend nunca exposto direto ao navegador. Se você abrir
+> `localhost:3000` aqui, vai levar "conexão recusada", e está tudo certo: o endereço é
+> <http://localhost>. A 3000 é do modo de desenvolvimento, abaixo.
+
 ### Telas
 
 | Rota | O que é |

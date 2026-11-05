@@ -14,9 +14,16 @@ Restrições que moldam o plano: 2 devs iniciantes, 30h/semana **somadas** (≈1
 no total do MVP), R$ 150/mês de infra, 5 semanas sem extensão de prazo. Essas 150 horas são
 o número mais importante deste documento — ele é que define o que entra e o que sai.
 
-Stack já decidida: Java 21 + Spring Boot 3 + PostgreSQL no backend, Next.js (App Router)
+Stack já decidida: Java 21 + Spring Boot 4 + PostgreSQL 18 no backend, Next.js (App Router)
 como PWA instalável, entrada manual + importação de OFX/CSV, sem Open Finance, sem
 documento fiscal.
+
+> **Nota de 05/11/2026.** Este plano foi escrito pedindo Spring Boot 3 e PostgreSQL 16; o
+> código usa **Boot 4.1.2** e **PostgreSQL 18**, e o texto abaixo já está corrigido. Boot 4
+> porque o Initializr não serve mais a linha 3 e a 3.5 saiu do suporte grátis — a
+> consequência prática é Jackson 3 (`tools.jackson.databind`). PG 18 porque traz `uuidv7()`
+> nativo, que é exatamente o que a seção 1 pede. As mesmas divergências estão numa tabela no
+> `README.md`.
 
 ---
 
@@ -40,7 +47,7 @@ João Pessoa, contra ~40ms em São Paulo. Num PWA que o barbeiro usa entre dois 
 em cada toque é percebido como "travando". São Paulo.
 
 Composição da máquina: **Caddy** (servidor web que resolve HTTPS automático, sem você
-configurar certificado) + container do Spring Boot + container do Next.js + **PostgreSQL 16
+configurar certificado) + container do Spring Boot + container do Next.js + **PostgreSQL 18
 em container** com volume no disco. Custo estimado: VPS R$ 50–90 + domínio ~R$ 40/ano +
 backup R$ 0 (Cloudflare R2 ou Backblaze B2 têm 10 GB grátis) = **dentro do orçamento com
 folga de mais da metade**.
@@ -388,7 +395,7 @@ de 4 GB fica entediado.
 ### Módulos (pacote por funcionalidade, não por camada)
 
 ```
-br.com.<produto>.financeiro
+br.com.zimbro
 ├── platform/       config, segurança, contexto de tenant, Money, Clock, erros, migrações
 ├── identity/       usuários, workspaces, membros, autenticação
 ├── accounts/       contas e saldos
@@ -1010,10 +1017,15 @@ escrevam esse procedimento em um arquivo `RUNBOOK.md` na semana 5, não na hora 
 Tudo o mais neste plano já está decidido e justificado. Estas cinco dependem de informação
 que só vocês têm.
 
-**Situação em 30/10/2026:** 3 e 5 estão resolvidas. 1 e 2 ficaram abertas e dependem de
-conversar com prospects — o plano segue com o padrão seguro descrito em cada uma, e as
-respostas são necessárias **antes da semana 2** (decisão 2) e **antes da semana 4**
-(decisão 1). 4 continua aberta e é a única que bloqueia a semana 0.
+**Situação em 05/11/2026:** 3, 4 e 5 estão resolvidas — o produto chama **Zimbro**, e só o
+domínio continua em aberto dentro da decisão 4. 1 e 2 dependem de conversar com prospects: o
+plano segue com o padrão seguro descrito em cada uma, e as respostas são necessárias **antes
+da semana 2** (decisão 2) e **antes da semana 4** (decisão 1).
+
+Duas pendências de infraestrutura que não são decisões de produto, mas bloqueiam cliente
+real: **não há VPS provisionada** (o job de deploy do CI fica desligado esperando o segredo
+`VPS_HOST`) e **não há SMTP** — a recuperação de senha hoje só escreve o link no log do
+servidor, então quem esquecer a senha fica trancado fora.
 
 **1. Quais bancos e aplicativos os cinco primeiros prospects usam?**
 Define quais *fixtures* de OFX construir na semana 4 e se o corte "OFX antes de CSV" está
@@ -1059,12 +1071,17 @@ Bloqueia deploy, certificado HTTPS, remetente de e-mail, ícone do PWA e a landi
 seja, bloqueia a semana 0. Decidam em 48h, mesmo que o nome não seja o definitivo: trocar
 domínio depois custa uma tarde.
 
-> **ABERTA — é o único bloqueio da semana 0.** Padrão se não houver resposta: pacote Java
-> `br.com.financeiro`, banco `financeiro`, e deploy inicial no IP da VPS sem domínio (sem
-> HTTPS válido, o que basta para testar entre vocês mas não para mostrar a cliente).
-> Renomear pacote depois é tarefa de IDE de ~20 minutos; trocar domínio **depois de ter
-> cliente cadastrado** é que dói, por causa de link de recuperação de senha e do PWA já
-> instalado no celular de alguém.
+> **NOME DECIDIDO: Zimbro.** Já aplicado em todo lugar: pacote Java `br.com.zimbro`, banco
+> `zimbro`, nome do projeto do Compose `zimbro`, prefixo do cookie de sessão e dos códigos de
+> erro `problem+json` (`urn:zimbro:`). O repositório é
+> `git@github.com:GustavoThemyus/zimbro.git`, licença MIT.
+>
+> **DOMÍNIO AINDA ABERTO — e é ele, não o nome, que bloqueia.** Sem domínio não há HTTPS
+> válido (o Caddy não emite certificado para IP), não há remetente de e-mail e não há landing
+> page; o deploy inicial fica no IP da VPS, o que basta para testar entre vocês mas não para
+> mostrar a cliente. Renomear pacote foi tarefa de IDE de 20 minutos, como previsto; trocar
+> domínio **depois de ter cliente cadastrado** é que dói, por causa de link de recuperação de
+> senha e do PWA já instalado no celular de alguém. Decidam antes de pôr o primeiro MEI real.
 
 **5. Como dividir o trabalho entre vocês dois?**
 Minha recomendação: **Dev A** fica com backend, banco e motor de regras; **Dev B** fica com
